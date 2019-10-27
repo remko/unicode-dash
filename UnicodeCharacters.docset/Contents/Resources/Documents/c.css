@@ -1,0 +1,64 @@
+body {
+  font-family: sans;
+  padding: 1em 2em;
+  color: #333;
+}
+
+h1 small {
+  color: #777;
+  font-size: .5em;
+  display: block;
+}
+
+figure {
+  margin: .2em;
+  margin-top: 0;
+  padding: .1em .2em;
+  font-size: 5em;
+  border: thin solid #ddd;
+  border-radius: .1em;
+  display: inline-block;
+}
+
+td, th {
+  padding: .125em .25em;
+}
+
+th {
+  text-align: right;
+}
+
+a {
+  color: #0074D9;
+}
+
+.b nav a {
+  margin: .125em .25em;
+  font-size: 1.5em;
+  width: 1em;
+  text-align: center;
+  display: inline-block;
+  text-decoration: none;
+  color: #333;
+}
+
+.b nav a small {
+  color: #777;
+}
+
+
+.b li i {
+  font-style: normal;
+  margin: 0;
+  margin-right: 1em;
+  font-size: 1em;
+  width: 1em;
+  text-align: center;
+  display: inline-block;
+}
+
+.b ul {
+  list-style: none;
+  padding: 0;
+}
+
