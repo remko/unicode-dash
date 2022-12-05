@@ -221,7 +221,7 @@ with open(os.path.join(docsDir, "index.html"), "w") as f:
 with open(docsetFile, "w") as f:
   f.write(json.dumps({
     "name": "Unicode Characters",
-    "version": "12.1.0/%s" % datetime.datetime.utcnow().isoformat(), 
+    "version": "15.0.0/%s" % datetime.datetime.utcnow().isoformat(), 
     "archive": "UnicodeCharacters.tgz",
     "author": {
       "name": "Remko Tronçon",
