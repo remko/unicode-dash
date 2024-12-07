@@ -131,8 +131,10 @@ for _, char in chars.items():
   block = blocks[charToBlock[int(cp, 16)]]
   if len(cp) > 4:
     python = "u\"\\U" + cp.rjust(8, "0") + "\""
+    javascript = "\"\\u{" + cp.rjust(6, "0") + "}\""
   else:
     python = "u\"\\u" + cp.rjust(4, "0") + "\""
+    javascript = "\"\\u" + cp.rjust(4, "0") + "\""
 
   docFile = cp + ".html"
   props = [
@@ -171,6 +173,7 @@ for _, char in chars.items():
       ("UTF-32", " ".join([("0x%X" % b) for b in s.encode("utf-32")])),
       ("HTML", entity.replace("&", "&amp;")),
       ("Python", "<code>" + python + "</code>"),
+      ("JavaScript", "<code>" + javascript + "</code>"),
     ]
   )
   with open(os.path.join(generatedDocsDir, docFile), "w") as f:
