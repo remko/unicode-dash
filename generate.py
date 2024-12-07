@@ -2,10 +2,12 @@
 
 import datetime
 import json
+import logging
 import os
-import re
 import sqlite3
 import xml.etree.cElementTree as ET
+
+logging.basicConfig(level = logging.INFO)
 
 categories = {
   "Lu": "Uppercase Letter",
@@ -79,9 +81,13 @@ def charLinks(c, chars):
 
 
 root = ET.parse('ucd.nounihan.flat.xml').getroot()
-
-description = root.find("{http://www.unicode.org/ns/2003/ucd/1.0}description")
-version = re.match(r"^Unicode ([\d.]+)$", description.text).group(1)
+title = root.find("{http://www.unicode.org/ns/2003/ucd/1.0}description")
+assert title is not None and title.text is not None
+title_cs = title.text.split(" ")
+assert len(title_cs) == 2 and title_cs[0] == "Unicode"
+unicode_version = title_cs[-1]
+version = "%s/%s" % (unicode_version, datetime.datetime.now(datetime.timezone.utc).isoformat())
+logging.info("generating docset version %s", version)
 
 docsDir = "UnicodeCharacters.docset/Contents/Resources/Documents"
 generatedDocsDir = os.path.join(docsDir, "c")
@@ -140,17 +146,16 @@ for _, char in chars.items():
 
   if char.attrib.get("dm", "#") != "#":
     dms = [chars.get(int(dm, 16)) for dm in char.attrib["dm"].split(" ")]
+    decomposition = []
     # I think sometimes this happens because i'm not looking at the full set
     if None in dms:
-      props.append(("Decomposition", [("U+" + dm) for dm in char.attrib["dm"].split(" ")]))
+      for dm in char.attrib["dm"].split(" "):
+        decomposition.append("U+" + dm)
     else:
-      props.append(
-        (
-          "Decomposition", " ".join(
-            ["<a href='%s'>%s</a>" % (dm.attrib["cp"] + ".html", charTitle(dm)) for dm in dms]
-          )
-        )
-      )
+      for dm in dms:
+        assert dm is not None
+        decomposition.append("<a href='%s'>%s</a>" % (dm.attrib["cp"] + ".html", charTitle(dm)))
+    props.append(("Decomposition", " ".join(decomposition)))
   if char.attrib.get("uc", "#") != "#":
     props.append(("Upper case", charLinks(char.attrib["uc"], chars)))
   if char.attrib.get("tc", "#") != "#":
@@ -232,10 +237,10 @@ with open(os.path.join(docsDir, "index.html"), "w") as f:
   f.write(
     """<head>
   <link rel=\"stylesheet\" href=\"c.css\">
-  <title>Unicode Characters</title>
+  <title>Unicode %(version)s Characters</title>
 </head>
 <body>
-  <h1>Unicode Characters</h1>
+  <h1>Unicode %(version)s Characters</h1>
   <h2>Introduction</h2>
   <p>
     This docset contains a description of all characters in the Unicode
@@ -256,8 +261,8 @@ with open(os.path.join(docsDir, "index.html"), "w") as f:
   </p>
 </body>
 """ % {
-      "name":
-        name,
+      "version":
+        unicode_version,
       "blocks":
         "".join(
           [
@@ -275,11 +280,11 @@ with open(docsetFile, "w") as f:
     json.dumps(
       {
         "name": "Unicode Characters",
-        "version": "%s/%s" % (version, datetime.datetime.utcnow().isoformat()),
+        "version": version,
         "archive": "UnicodeCharacters.tgz",
         "author": {
           "name": "Remko Tronçon",
-          "link": "https://el-tramo.be"
+          "link": "https://mko.re"
         },
         "aliases": [],
         "specific_versions": []
