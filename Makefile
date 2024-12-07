@@ -21,6 +21,7 @@ $(DOCSET_PACKAGE): build
 clean:
 	-rm -rf \
 		$(DOCSET_DIR)/Contents/Resources/Documents/c \
+		$(DOCSET_DIR)/Contents/Resources/Documents/b \
 		$(DOCSET_DIR)/Contents/Resources/docSet.dsidx \
 		$(DOCSET_DIR)/Contents/Resources/optimizedIndex.dsidx \
 		$(DOCSET_PACKAGE) \

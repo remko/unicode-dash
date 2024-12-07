@@ -94,15 +94,18 @@ version = "%s/%s" % (unicode_version, datetime.datetime.now(datetime.timezone.ut
 logging.info("generating docset version %s", version)
 
 docsDir = "UnicodeCharacters.docset/Contents/Resources/Documents"
-generatedDocsDir = os.path.join(docsDir, "c")
+characterDocsDir = os.path.join(docsDir, "c")
+blockDocsDir = os.path.join(docsDir, "b")
 dbFile = "UnicodeCharacters.docset/Contents/Resources/docSet.dsidx"
 docsetFile = "docset.json"
 
 with open("cldr-annotations.json", "r", encoding = "utf-8") as f:
   annotations = json.loads(f.read())["annotations"]["annotations"]
 
-if not os.path.exists(generatedDocsDir):
-  os.makedirs(generatedDocsDir)
+if not os.path.exists(characterDocsDir):
+  os.makedirs(characterDocsDir)
+if not os.path.exists(blockDocsDir):
+  os.makedirs(blockDocsDir)
 
 if os.path.exists(dbFile):
   os.remove(dbFile)
@@ -148,7 +151,7 @@ for _, char in chars.items():
   props = [
     (
       "Block",
-      "<a href='%s'>%s</a>" % ("b" + block.attrib["first-cp"] + ".html", block.attrib["name"])
+      "<a href='%s'>%s</a>" % ("../b/" + block.attrib["first-cp"] + ".html", block.attrib["name"])
     ),
     # ("Category", "<a href='%s'>%s</a>" % ("c" + char.attrib["gc"] + ".html", categories[char.attrib["gc"]]))
     ("Category", "%s" % categories[char.attrib["gc"]]),
@@ -184,7 +187,7 @@ for _, char in chars.items():
       ("JavaScript", "<code>" + javascript + "</code>"),
     ]
   )
-  with open(os.path.join(generatedDocsDir, docFile), "w") as f:
+  with open(os.path.join(characterDocsDir, docFile), "w") as f:
     f.write(
       "<head><link rel=\"stylesheet\" href=\"../c.css\"><title>%(title)s</title></head><body class='c'><h1>%(nameOrOldName)s <small>U+%(cp)s</small></h1>%(figure)s<table><tbody>%(props)s</tbody></table></body>"
       % {
@@ -215,7 +218,7 @@ for _, char in chars.items():
 
 for block in blocks:
   name = block.attrib["name"]
-  docFile = "b" + block.attrib["first-cp"] + ".html"
+  docFile = block.attrib["first-cp"] + ".html"
   first = int(block.attrib["first-cp"], 16)
   last = int(block.attrib["last-cp"], 16)
   overviewChars = []
@@ -228,15 +231,15 @@ for block in blocks:
         if chars[char].attrib["na"] == "":
           htmlOverviewChar = "<small>?</small>"
         overviewChars.append(
-          "<a href='%s'>%s</a>" % (chars[char].attrib["cp"] + ".html", htmlOverviewChar)
+          "<a href='../c/%s'>%s</a>" % (chars[char].attrib["cp"] + ".html", htmlOverviewChar)
         )
       else:
         htmlChar = ""
       blockChars.append(
-        "<li><i>%s</i> <a href='%s'>%s</a></i>" %
+        "<li><i>%s</i> <a href='../c/%s'>%s</a></i>" %
         (htmlChar, chars[char].attrib["cp"] + ".html", charTitle(chars[char]))
       )
-  with open(os.path.join(generatedDocsDir, docFile), "w") as f:
+  with open(os.path.join(blockDocsDir, docFile), "w") as f:
     f.write(
       "<head><link rel=\"stylesheet\" href=\"../c.css\"><title>%(name)s</title></head><body class='b'><h1>%(name)s</h1><h2>Overview</h2><nav>%(overviewChars)s</nav><h2>Characters</h2><ul>%(blockChars)s</ul></body>"
       % {
@@ -247,7 +250,7 @@ for block in blocks:
     )
   c.execute(
     '''INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?, ?, ?)''',
-    (name, "Section", "c/" + docFile)
+    (name, "Section", "b/" + docFile)
   )
 
 # for categoryID, category in categories.items():
@@ -295,7 +298,7 @@ with open(os.path.join(docsDir, "index.html"), "w") as f:
         "".join(
           [
             "<li><a href='%s'>%s</a> (%s - %s)</li>" % (
-              "c/b" + b.attrib["first-cp"] + ".html", b.attrib["name"], b.attrib["first-cp"],
+              "b/" + b.attrib["first-cp"] + ".html", b.attrib["name"], b.attrib["first-cp"],
               b.attrib["last-cp"]
             ) for b in blocks
           ]
