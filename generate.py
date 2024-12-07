@@ -165,6 +165,7 @@ for _, char in chars.items():
 
   props.extend(
     [
+      ("Added", char.attrib.get("age")),
       ("UTF-8", " ".join([("0x%X" % b) for b in s.encode("utf-8")])),
       ("UTF-16", " ".join([("0x%X" % b) for b in s.encode("utf-16")])),
       ("UTF-32", " ".join([("0x%X" % b) for b in s.encode("utf-32")])),
