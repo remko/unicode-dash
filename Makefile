@@ -15,13 +15,14 @@ dist: clean $(DOCSET_PACKAGE)
 package: $(DOCSET_PACKAGE)
 
 $(DOCSET_PACKAGE): build
-	tar --exclude='.DS_Store' -czf $@ $(DOCSET_DIR)
+	tar --exclude='.DS_Store' --exclude='optimizedIndex.dsidx' -czf $(DOCSET_PACKAGE) $(DOCSET_DIR)
 
 .PHONY: clean
 clean:
 	-rm -rf \
 		$(DOCSET_DIR)/Contents/Resources/Documents/c \
 		$(DOCSET_DIR)/Contents/Resources/docSet.dsidx \
+		$(DOCSET_DIR)/Contents/Resources/optimizedIndex.dsidx \
 		$(DOCSET_PACKAGE) \
 		docset.json
 
