@@ -5,7 +5,7 @@ DASH_DIR=dash
 
 all: build
 
-build: ucd.nounihan.flat.xml
+build: ucd.nounihan.flat.xml cldr-annotations.json
 	python3 generate.py
 
 dist: clean build
@@ -24,3 +24,5 @@ ucd.nounihan.flat.xml:
 	unzip ucd.nounihan.flat.zip
 	rm ucd.nounihan.flat.zip
 
+cldr-annotations.json:
+	curl -o $@ https://raw.githubusercontent.com/unicode-org/cldr-json/refs/heads/main/cldr-json/cldr-annotations-full/annotations/en/annotations.json

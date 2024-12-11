@@ -80,6 +80,10 @@ def charLinks(c, chars):
   return " ".join([charLink(chars[int(char, 16)]) for char in c.split(" ")])
 
 
+def charPrintable(char):
+  return char.attrib["gc"] not in ["Cc", "Cn"]
+
+
 root = ET.parse('ucd.nounihan.flat.xml').getroot()
 title = root.find("{http://www.unicode.org/ns/2003/ucd/1.0}description")
 assert title is not None and title.text is not None
@@ -93,6 +97,9 @@ docsDir = "UnicodeCharacters.docset/Contents/Resources/Documents"
 generatedDocsDir = os.path.join(docsDir, "c")
 dbFile = "UnicodeCharacters.docset/Contents/Resources/docSet.dsidx"
 docsetFile = "docset.json"
+
+with open("cldr-annotations.json", "r", encoding = "utf-8") as f:
+  annotations = json.loads(f.read())["annotations"]["annotations"]
 
 if not os.path.exists(generatedDocsDir):
   os.makedirs(generatedDocsDir)
@@ -127,6 +134,7 @@ for _, char in chars.items():
   cp = char.attrib["cp"]
   title = charTitle(char)
   s = chr(int(cp, 16))
+  printable = charPrintable(char)
   entity = "&#" + str(int(cp, 16)) + ";"
   block = blocks[charToBlock[int(cp, 16)]]
   if len(cp) > 4:
@@ -171,25 +179,38 @@ for _, char in chars.items():
       ("UTF-8", " ".join([("0x%X" % b) for b in s.encode("utf-8")])),
       ("UTF-16", " ".join([("0x%X" % b) for b in s.encode("utf-16")])),
       ("UTF-32", " ".join([("0x%X" % b) for b in s.encode("utf-32")])),
-      ("HTML", entity.replace("&", "&amp;")),
+      ("HTML", "<code>" + entity.replace("&", "&amp;") + "</code>"),
       ("Python", "<code>" + python + "</code>"),
       ("JavaScript", "<code>" + javascript + "</code>"),
     ]
   )
   with open(os.path.join(generatedDocsDir, docFile), "w") as f:
     f.write(
-      "<head><link rel=\"stylesheet\" href=\"../c.css\"><title>%(title)s</title></head><body class='c'><h1>%(nameOrOldName)s <small>U+%(cp)s</small></h1><figure>%(entity)s</figure><table><tbody>%(props)s</tbody></table></body>"
+      "<head><link rel=\"stylesheet\" href=\"../c.css\"><title>%(title)s</title></head><body class='c'><h1>%(nameOrOldName)s <small>U+%(cp)s</small></h1>%(figure)s<table><tbody>%(props)s</tbody></table></body>"
       % {
+        "figure": "<figure>%s</figure>" % entity if printable else "",
         "nameOrOldName": charNameOrOldName(char),
         "cp": cp,
         "title": title,
-        "entity": entity,
         "props": "".join(["<tr><th>%s</th><td>%s</td></tr>" % (k, v) for k, v in props]),
       }
     )
+  indexName = charTitle(char)
+  aliases = set()
+  annotation = annotations.get(s)
+  if annotation is not None:
+    lowerCharName = charNameOrOldName(char).lower()
+    for a in annotation["default"]:
+      # Only add aliases that are not part of the actual name
+      if a.lower() not in lowerCharName:
+        aliases.add(a)
+  if len(aliases) > 0:
+    indexName += " (%s)" % ", ".join(aliases)
+  if printable:
+    indexName = s + " " + indexName
   c.execute(
     '''INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES (?, ?, ?)''',
-    (charTitle(char), "Element", "c/" + docFile)
+    (indexName, "Element", "c/" + docFile)
   )
 
 for block in blocks:
@@ -201,13 +222,16 @@ for block in blocks:
   blockChars = []
   for char in range(first, last + 1):
     if char in chars:
-      htmlChar = "&#%d;" % char
-      htmlOverviewChar = htmlChar
-      if chars[char].attrib["na"] == "":
-        htmlOverviewChar = "<small>?</small>"
-      overviewChars.append(
-        "<a href='%s'>%s</a>" % (chars[char].attrib["cp"] + ".html", htmlOverviewChar)
-      )
+      if charPrintable(chars[char]):
+        htmlChar = "&#%d;" % char
+        htmlOverviewChar = htmlChar
+        if chars[char].attrib["na"] == "":
+          htmlOverviewChar = "<small>?</small>"
+        overviewChars.append(
+          "<a href='%s'>%s</a>" % (chars[char].attrib["cp"] + ".html", htmlOverviewChar)
+        )
+      else:
+        htmlChar = ""
       blockChars.append(
         "<li><i>%s</i> <a href='%s'>%s</a></i>" %
         (htmlChar, chars[char].attrib["cp"] + ".html", charTitle(chars[char]))
